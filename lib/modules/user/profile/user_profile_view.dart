@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../core/widgets/custom_text.dart';
+import '../../../data/models/user_model.dart';
 import '../../../data/services/auth_service.dart';
 import '../../../data/models/models.dart';
 import '../../../core/theme/app_theme.dart';

@@ -4,6 +4,9 @@ import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../app/app_config/app_config.dart';
 import '../models/models.dart';
+import '../models/notification_model.dart';
+import '../models/transaction_model.dart';
+import '../models/user_model.dart';
 
 final supabase = Supabase.instance.client;
 
@@ -226,6 +229,82 @@ class SupabaseService extends GetxService {
     return result as String;
   }
 
+  // ১. ইউজার পেমেন্ট রিকোয়েস্ট পাঠাবে
+  // ইউজার পেমেন্ট রিকোয়েস্ট পাঠাবে
+  Future<void> requestPayment({
+    required double amount,
+    required String month,
+    required String phone,
+    File? receiptFile,
+  }) async {
+    final uid = supabase.auth.currentUser!.id;
+    String? receiptUrl;
+
+    // ১. যদি রিসিপ্ট থাকে তবে আপলোড করো
+    if (receiptFile != null) {
+      final ext = receiptFile.path.split('.').last;
+      final path = 'receipts/$uid/${DateTime.now().millisecondsSinceEpoch}.$ext';
+      await supabase.storage.from('receipts').upload(path, receiptFile);
+      receiptUrl = supabase.storage.from('receipts').getPublicUrl(path);
+    }
+
+    // ২. ট্রানজেকশন ইনসার্ট
+    await supabase.from('transactions').insert({
+      'user_id': uid,
+      'amount': amount,
+      'month': month,
+      'phone_number': phone,
+      'receipt_url': receiptUrl,
+      'status': 'pending',
+      'month_year': DateTime.now().toIso8601String().substring(0, 10), // বর্তমান মাসের রেকর্ড হিসেবে
+    });
+  }
+
+// ইউজারের সব ট্রানজেকশন হিস্ট্রি
+  Future<List<TransactionModel>> getUserTransactions(String userId) async {
+    final data = await supabase
+        .from('transactions')
+        .select()
+        .eq('user_id', userId)
+        .order('created_at', ascending: false);
+    return (data as List).map((t) => TransactionModel.fromSupabase(t)).toList();
+  }
+
+// ২. এডমিন স্পেশাল চার্জ যোগ করবে
+  Future<void> addSpecialCharge({String? userId, required String title, required double amount}) async {
+    await supabase.from('special_charges').insert({
+      'user_id': userId, // userId null হলে লজিক অনুযায়ী সবার dues বাড়বে
+      'title': title,
+      'amount': amount,
+    });
+
+    // প্রোফাইলে dues আপডেট করার লজিক (সব ইউজার বা নির্দিষ্ট ইউজার)
+    if (userId == null) {
+      await supabase.rpc('add_global_special_charge', params: {'p_amount': amount});
+    } else {
+      await supabase.from('profiles').update({
+        'dues': supabase.rpc('increment_dues', params: {'p_id': userId, 'p_amount': amount})
+      }).eq('id', userId);
+    }
+  }
+  Future<void> applySpecialCharge({
+    required String title,
+    required double amount,
+    String? userId, // null পাঠালে সবার জন্য হবে
+  }) async {
+    await supabase.rpc('apply_special_charge', params: {
+      'p_title': title,
+      'p_amount': amount,
+      'p_target_user_id': userId,
+    });
+  }
+
+// ৩. এডমিন মান্থলি অ্যামাউন্ট ফিক্স করবে
+  Future<void> setMonthlyAmount(String userId, double amount) async {
+    await supabase.from('profiles').update({'monthly_amount': amount}).eq('id', userId);
+  }
+
+
   // ─────────────────────────────────────────────────────
   // ADMIN – STATS
   // ─────────────────────────────────────────────────────
@@ -244,14 +323,16 @@ class SupabaseService extends GetxService {
     return Map<String, dynamic>.from(result);
   }
 
-  Future<List<TransactionModel>> getUserTransactions(String userId) async {
-    final data = await supabase
-        .from('transactions')
-        .select()
-        .eq('user_id', userId)
-        .order('month_year', ascending: false);
-    return (data as List).map((t) => TransactionModel.fromSupabase(t)).toList();
-  }
+  // Future<List<TransactionModel>> getUserTransactions(String userId) async {
+  //   final data = await supabase
+  //       .from('transactions')
+  //       .select()
+  //       .eq('user_id', userId)
+  //       .order('month_year', ascending: false);
+  //   return (data as List).map((t) => TransactionModel.fromSupabase(t)).toList();
+  // }
+
+
 
   // ─────────────────────────────────────────────────────
   // NOTIFICATIONS
@@ -286,76 +367,6 @@ class SupabaseService extends GetxService {
     });
   }
 
-  // // ─────────────────────────────────────────────────────
-  // // CHAT – MESSAGES
-  // // ─────────────────────────────────────────────────────
-  //
-  // Future<List<MessageModel>> getMessages({
-  //   required String userAId,
-  //   required String userBId,
-  // }) async {
-  //   final data = await supabase
-  //       .from('messages')
-  //       .select()
-  //       .or('and(sender_id.eq.$userAId,receiver_id.eq.$userBId),and(sender_id.eq.$userBId,receiver_id.eq.$userAId)')
-  //       .order('created_at', ascending: true);
-  //   return (data as List).map((m) => MessageModel.fromSupabase(m)).toList();
-  // }
-  //
-  // Future<void> sendMessage({
-  //   required String senderId,
-  //   required String receiverId,
-  //   required String text,
-  // }) async {
-  //   await supabase.from('messages').insert({
-  //     'sender_id': senderId,
-  //     'receiver_id': receiverId,
-  //     'text': text,
-  //   });
-  // }
-  //
-  // Future<void> markMessagesRead({
-  //   required String senderId,
-  //   required String receiverId,
-  // }) async {
-  //   await supabase
-  //       .from('messages')
-  //       .update({'is_read': true})
-  //       .eq('sender_id', senderId)
-  //       .eq('receiver_id', receiverId)
-  //       .eq('is_read', false);
-  // }
-  //
-  // Future<List<Map<String, dynamic>>> getAdminChatList() async {
-  //   final result = await supabase.rpc('get_admin_chat_list');
-  //   return List<Map<String, dynamic>>.from(result);
-  // }
-  //
-  // // ─────────────────────────────────────────────────────
-  // // REALTIME SUBSCRIPTIONS
-  // // ─────────────────────────────────────────────────────
-  //
-  // RealtimeChannel subscribeToMessages({
-  //   required String userAId,
-  //   required String userBId,
-  //   required void Function(MessageModel) onMessage,
-  // }) {
-  //   return supabase
-  //       .channel('messages:$userAId:$userBId')
-  //       .onPostgresChanges(
-  //     event: PostgresChangeEvent.insert,
-  //     schema: 'public',
-  //     table: 'messages',
-  //     callback: (payload) {
-  //       final msg = MessageModel.fromSupabase(payload.newRecord);
-  //       final relevant =
-  //           (msg.senderId == userAId && msg.receiverId == userBId) ||
-  //               (msg.senderId == userBId && msg.receiverId == userAId);
-  //       if (relevant) onMessage(msg);
-  //     },
-  //   )
-  //       .subscribe();
-  // }
 
   RealtimeChannel subscribeToNotifications({
     required String userId,
@@ -378,4 +389,41 @@ class SupabaseService extends GetxService {
     )
         .subscribe();
   }
+
+// ইউজারের লেজার আনা (কে কোন মাসের টাকা দিয়েছে)
+  Future<List<dynamic>> getUserLedger(String userId) async {
+    final res = await supabase.rpc('get_user_ledger', params: {'p_user_id': userId});
+    return res as List<dynamic>;
+  }
+  // সেটিংস পড়া
+  Future<Map<String, dynamic>> getAppSettings() async {
+    final data = await supabase.from('app_settings').select().eq('id', 1).single();
+    return data;
+  }
+
+// সেটিংস আপডেট করা
+  Future<void> updateAppSettings(double amount, DateTime startDate) async {
+    await supabase.from('app_settings').update({
+      'monthly_amount': amount,
+      'start_date': startDate.toIso8601String().substring(0, 10),
+      'updated_at': DateTime.now().toIso8601String(),
+    }).eq('id', 1);
+  }
+  // ১. কোনো মাসের বাজেট সেট করা (Regular/Special)
+  Future<void> setMonthRequirement(DateTime month, double amount, String title, bool isSpecial) async {
+    await supabase.from('monthly_requirements').upsert({
+      'month_year': DateTime(month.year, month.month, 1).toIso8601String().substring(0, 10),
+      'amount': amount,
+      'title': title,
+      'is_special': isSpecial,
+    });
+  }
+
+// ২. নির্দিষ্ট মাসের সব ইউজারের রিপোর্ট আনা (ডাউনলোডের জন্য)
+  Future<List<dynamic>> getMonthlyReport(DateTime month) async {
+    final dateStr = DateTime(month.year, month.month, 1).toIso8601String().substring(0, 10);
+    return await supabase.rpc('get_monthly_report', params: {'p_month_year': dateStr});
+  }
+
+
 }

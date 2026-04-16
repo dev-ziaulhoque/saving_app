@@ -20,4 +20,5 @@ abstract class AppRoutes {
   static const USER_CHAT = '/user/chat';
   static const USER_PROFILE = '/user/profile';
   static const USER_EDIT_PROFILE = '/user/profile/edit';
+  static const PAYMENT_REQUEST = '/user/dashboard';
 }

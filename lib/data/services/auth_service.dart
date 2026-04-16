@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 import '../models/models.dart';
+import '../models/user_model.dart';
 import 'supabase_service.dart';
 
 class AuthService extends GetxService {

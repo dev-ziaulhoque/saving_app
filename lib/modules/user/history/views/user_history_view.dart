@@ -1,41 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../data/providers/api_provider.dart';
-import '../../../data/models/models.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/common_widgets.dart';
-
-class UserHistoryController extends GetxController {
-  final _api = ApiProvider();
-  final isLoading = false.obs;
-  final transactions = <TransactionModel>[].obs;
-
-  @override
-  void onInit() {
-    super.onInit();
-    fetchHistory();
-  }
-
-  Future<void> fetchHistory() async {
-    isLoading.value = true;
-    try {
-      final res = await _api.getUserTransactions();
-      transactions.value = (res.data['transactions'] as List)
-          .map((t) => TransactionModel.fromJson(t))
-          .toList();
-    } catch (_) {
-    } finally {
-      isLoading.value = false;
-    }
-  }
-}
-
-class UserHistoryBinding extends Bindings {
-  @override
-  void dependencies() {
-    Get.lazyPut<UserHistoryController>(() => UserHistoryController());
-  }
-}
+import '../../../../data/models/transaction_model.dart';
+import '../../../../data/providers/api_provider.dart';
+import '../../../../data/models/models.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/common_widgets.dart';
+import '../controllers/user_history_controller.dart';
 
 class UserHistoryView extends GetView<UserHistoryController> {
   const UserHistoryView({super.key});

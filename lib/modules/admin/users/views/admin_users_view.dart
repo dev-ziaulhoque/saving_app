@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../app/routes/app_routes.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/common_widgets.dart';
-import '../../../core/widgets/custom_text.dart';
-import '../../../data/models/models.dart';
-import 'admin_users_controller.dart';
+import '../../../../app/routes/app_routes.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/custom_text.dart';
+import '../../../../data/models/models.dart';
+import '../../../../data/models/user_model.dart';
+import '../controllers/admin_users_controller.dart';
 
 class AdminUsersView extends GetView<AdminUsersController> {
   const AdminUsersView({super.key});

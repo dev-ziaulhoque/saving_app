@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:saving_app/modules/user/dashboard/controllers/user_dashboard_controller.dart';
+import 'package:saving_app/modules/user/history/views/user_payment_request_view.dart';
 import '../../../../app/routes/app_routes.dart';
-import '../../../../data/providers/api_provider.dart';
-import '../../../../data/models/models.dart';
-import '../../../../data/services/auth_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/custom_text.dart';
+import '../../../../core/widgets/custom_button.dart';
+import '../../../../data/models/models.dart';
+import '../../../../data/models/transaction_model.dart';
+import '../../../../data/services/auth_service.dart';
+import '../controllers/user_dashboard_controller.dart';
 
 class UserDashboardView extends GetView<UserDashboardController> {
   const UserDashboardView({super.key});
@@ -14,224 +17,286 @@ class UserDashboardView extends GetView<UserDashboardController> {
   @override
   Widget build(BuildContext context) {
     final user = AuthService.to.currentUser.value;
+
     return Scaffold(
       backgroundColor: AppColors.surface,
-      body: Column(children: [
-        _buildHeader(user?.name ?? 'User'),
-        Expanded(
-          child: Obx(() => controller.isLoading.value
-              ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-              : RefreshIndicator(
-                  onRefresh: controller.fetchDashboard,
-                  color: AppColors.primary,
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    child: Column(children: [
-                      _savingsCard(),
-                      const SizedBox(height: 8),
-                      SectionHeader(
-                        title: 'Recent Transactions',
-                        actionText: 'See All',
-                        onAction: () => Get.toNamed(AppRoutes.USER_HISTORY),
+      body: Column(
+        children: [
+          _buildHeader(user?.name ?? 'User'),
+          Expanded(
+            child: Obx(() => controller.isLoading.value
+                ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                : RefreshIndicator(
+              onRefresh: controller.fetchDashboard,
+              color: AppColors.primary,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  children: [
+                    _buildSavingsCard(),
+                    const SizedBox(height: 20),
+
+                    // পেমেন্ট সাবমিট করার মূল বাটন
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: CustomButton(
+                        text: 'Submit New Payment',
+                        icon: Icons.add_circle_outline,
+                        onPressed: () => Get.to(()=> const PaymentRequestView()),
                       ),
-                      Obx(() => controller.recentTransactions.isEmpty
-                          ? _emptyTxn()
-                          : Column(
-                              children: controller.recentTransactions
-                                  .map(_txnItem)
-                                  .toList())),
-                      const SizedBox(height: 20),
-                    ]),
-                  ),
-                )),
-        ),
-        _bottomNav(0),
-      ]),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // রিসেন্ট ট্রানজেকশন সেকশন
+                    SectionHeader(
+                      title: 'Recent Transactions',
+                      actionText: 'See All',
+                      onAction: () => Get.toNamed(AppRoutes.USER_HISTORY),
+                    ),
+
+                    Obx(() => controller.recentTransactions.isEmpty
+                        ? _buildEmptyState()
+                        : Column(
+                      children: controller.recentTransactions
+                          .map((t) => _buildTransactionItem(t))
+                          .toList(),
+                    )),
+                    const SizedBox(height: 30),
+                  ],
+                ),
+              ),
+            )),
+          ),
+          _buildBottomNav(0),
+        ],
+      ),
     );
   }
 
+  // --- ১. হেডার সেকশন ---
   Widget _buildHeader(String name) {
     return Container(
       color: AppColors.bgDark,
       padding: EdgeInsets.only(
         top: MediaQuery.of(Get.context!).padding.top + 12,
-        left: 18, right: 18, bottom: 16,
+        left: 18, right: 18, bottom: 20,
       ),
-      child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Good day 👋',
-              style: TextStyle(fontFamily: 'Nunito', fontSize: 13,
-                  color: Colors.white.withOpacity(0.5))),
-          Text(name,
-              style: const TextStyle(fontFamily: 'Nunito', fontSize: 20,
-                  fontWeight: FontWeight.w800, color: Colors.white)),
-        ]),
-        PopupMenuButton(
-          child: UserAvatar(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CustomText.small('Good day 👋', color: Colors.white.withOpacity(0.5)),
+              CustomText.heading(name, color: Colors.white),
+            ],
+          ),
+          PopupMenuButton<String>(
+            child: UserAvatar(
               initials: AuthService.to.currentUser.value?.initials ?? 'U',
-              color: AppColors.primary),
-          itemBuilder: (_) => [
-            const PopupMenuItem(value: 'profile', child: Text('My Profile')),
-            const PopupMenuItem(value: 'logout', child: Text('Logout')),
-          ],
-          onSelected: (v) async {
-            if (v == 'profile') Get.toNamed(AppRoutes.USER_PROFILE);
-            if (v == 'logout') {
-              await AuthService.to.logout();
-              Get.offAllNamed(AppRoutes.LOGIN);
-            }
-          },
-        ),
-      ]),
+              color: AppColors.primary,
+              size: 44,
+            ),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+            itemBuilder: (_) => [
+              const PopupMenuItem(value: 'profile', child: CustomText.body('My Profile')),
+              const PopupMenuItem(value: 'logout', child: CustomText.body('Logout', color: AppColors.error)),
+            ],
+            onSelected: (v) async {
+              if (v == 'profile') Get.toNamed(AppRoutes.USER_PROFILE);
+              if (v == 'logout') {
+                await AuthService.to.logout();
+                Get.offAllNamed(AppRoutes.LOGIN);
+              }
+            },
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _savingsCard() {
+  // --- ২. সেভিংস কার্ড (Gradient Card) ---
+  Widget _buildSavingsCard() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
       child: Obx(() {
+        // প্রগ্রেস ক্যালকুলেশন
         final progress = controller.totalMonths.value > 0
             ? controller.monthsPaid.value / controller.totalMonths.value
             : 0.0;
+
         return Container(
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.all(22),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
               colors: [AppColors.primary, Color(0xFF6366F1)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withOpacity(0.3),
+                blurRadius: 15,
+                offset: const Offset(0, 8),
+              )
+            ],
           ),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Text('Total Savings',
-                style: TextStyle(fontFamily: 'Nunito', fontSize: 13,
-                    color: Colors.white70)),
-            Text('৳${controller.totalSaved.value.toStringAsFixed(0)}',
-                style: const TextStyle(fontFamily: 'Nunito', fontSize: 32,
-                    fontWeight: FontWeight.w800, color: Colors.white)),
-            const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: progress.toDouble().clamp(0.0, 1.0),
-                backgroundColor: Colors.white24,
-                valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFA5F3FC)),
-                minHeight: 6,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const CustomText.label('TOTAL SAVED BALANCE', color: Colors.white70),
+              const SizedBox(height: 4),
+              CustomText.heading(
+                '৳${controller.totalSaved.value.toStringAsFixed(0)}',
+                color: Colors.white,
               ),
-            ),
-            const SizedBox(height: 14),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              _mini('Monthly', '৳${controller.monthlyAmount.value.toStringAsFixed(0)}'),
-              _mini('Months Paid', '${controller.monthsPaid.value}/${controller.totalMonths.value}'),
-              _mini('Dues', '৳${controller.dues.value.toStringAsFixed(0)}',
-                  valueColor: controller.dues.value > 0 ? const Color(0xFFFCA5A5) : Colors.white),
-            ]),
-          ]),
+              const SizedBox(height: 18),
+
+              // প্রগ্রেস বার
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: LinearProgressIndicator(
+                  value: progress.clamp(0.0, 1.0),
+                  backgroundColor: Colors.white24,
+                  valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFA5F3FC)),
+                  minHeight: 8,
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // নিচের ৩টি স্ট্যাটাস
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _statItem('Remaining Due', '৳${controller.dues.value.toStringAsFixed(0)}',
+                      isAlert: controller.dues.value > 0),
+                  _statItem('Monthly Fix', '৳${controller.monthlyAmount.value.toStringAsFixed(0)}'),
+                  _statItem('Months Paid', '${controller.monthsPaid.value}/${controller.totalMonths.value}'),
+                ],
+              ),
+            ],
+          ),
         );
       }),
     );
   }
 
-  Widget _mini(String label, String value, {Color? valueColor}) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label,
-          style: const TextStyle(fontFamily: 'Nunito', fontSize: 11,
-              color: Colors.white60)),
-      Text(value,
-          style: TextStyle(fontFamily: 'Nunito', fontSize: 14,
-              fontWeight: FontWeight.w800,
-              color: valueColor ?? Colors.white)),
-    ]);
+  Widget _statItem(String label, String value, {bool isAlert = false}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CustomText.label(label, color: Colors.white60),
+        const SizedBox(height: 2),
+        CustomText.subtitle(
+          value,
+          color: isAlert ? const Color(0xFFFCA5A5) : Colors.white,
+        ),
+      ],
+    );
   }
 
-  Widget _txnItem(TransactionModel t) {
+  // --- ৩. ট্রানজেকশন আইটেম ডিজাইন ---
+  Widget _buildTransactionItem(TransactionModel t) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.borderColor),
       ),
-      child: Row(children: [
-        Container(
-          width: 42, height: 42,
-          decoration: BoxDecoration(
-            color: t.isConfirmed ? AppColors.successLight : AppColors.warningLight,
-            borderRadius: BorderRadius.circular(12),
+      child: Row(
+        children: [
+          Container(
+            width: 44, height: 44,
+            decoration: BoxDecoration(
+              color: t.isConfirmed ? AppColors.successLight : AppColors.warningLight,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              t.isConfirmed ? Icons.check_circle_outline : Icons.pending_outlined,
+              color: t.isConfirmed ? AppColors.success : AppColors.warning,
+              size: 24,
+            ),
           ),
-          child: Icon(
-            t.isConfirmed ? Icons.check_circle_outline : Icons.pending_outlined,
-            color: t.isConfirmed ? AppColors.success : AppColors.warning,
-            size: 22,
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CustomText.subtitle(t.month, color: AppColors.textPrimary),
+                CustomText.small(
+                  '${t.submittedAt.day}/${t.submittedAt.month}/${t.submittedAt.year} • ${t.status.toUpperCase()}',
+                  color: AppColors.textSecondary,
+                ),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(t.month,
-                style: const TextStyle(fontFamily: 'Nunito', fontSize: 14,
-                    fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-            Text('${t.submittedAt.day}/${t.submittedAt.month}/${t.submittedAt.year} • ${t.status}',
-                style: const TextStyle(fontFamily: 'Nunito', fontSize: 12,
-                    color: AppColors.textSecondary)),
-          ]),
-        ),
-        Text('+৳${t.amount.toStringAsFixed(0)}',
-            style: const TextStyle(fontFamily: 'Nunito', fontSize: 15,
-                fontWeight: FontWeight.w800, color: AppColors.success)),
-      ]),
+          CustomText.subtitle(
+            '+৳${t.amount.toStringAsFixed(0)}',
+            color: t.isConfirmed ? AppColors.success : AppColors.textPrimary,
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _emptyTxn() {
+  Widget _buildEmptyState() {
     return const Padding(
-      padding: EdgeInsets.all(32),
+      padding: EdgeInsets.symmetric(vertical: 40),
       child: EmptyState(
         icon: '📋',
         title: 'No transactions yet',
-        subtitle: 'Your deposit history will appear here.',
+        subtitle: 'Submit your first hand-cash payment info.',
       ),
     );
   }
 
-  Widget _bottomNav(int current) {
+  // --- ৪. বটম নেভিগেশন ---
+  Widget _buildBottomNav(int current) {
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(top: BorderSide(color: AppColors.borderColor)),
       ),
-      padding: const EdgeInsets.only(top: 8, bottom: 12),
-      child: Row(children: [
-        _navItem(Icons.home_outlined, 'Home', 0, current, () {}),
-        _navItem(Icons.notifications_outlined, 'Alerts', 1, current,
-            () => Get.toNamed(AppRoutes.USER_NOTIFICATIONS)),
-        _navItem(Icons.chat_bubble_outline, 'Chat', 2, current,
-            () => Get.toNamed(AppRoutes.USER_CHAT)),
-
-        _navItem(Icons.person_outline, 'Profile', 3, current,
-            () => Get.toNamed(AppRoutes.USER_PROFILE)),
-      ]),
+      padding: const EdgeInsets.only(top: 10, bottom: 12),
+      child: Row(
+        children: [
+          _navItem(Icons.dashboard_outlined, Icons.dashboard, 'Home', 0, current, () {}),
+          _navItem(Icons.notifications_outlined, Icons.notifications, 'Alerts', 1, current,
+                  () => Get.toNamed(AppRoutes.USER_NOTIFICATIONS)),
+          _navItem(Icons.chat_bubble_outline, Icons.chat_bubble, 'Support', 2, current,
+                  () => Get.toNamed(AppRoutes.USER_CHAT)),
+          _navItem(Icons.person_outline, Icons.person, 'Profile', 3, current,
+                  () => Get.toNamed(AppRoutes.USER_PROFILE)),
+        ],
+      ),
     );
   }
 
-  Widget _navItem(IconData icon, String label, int index, int current, VoidCallback onTap) {
+  Widget _navItem(IconData icon, IconData activeIcon, String label, int index, int current, VoidCallback onTap) {
     final active = index == current;
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
-        child: Column(children: [
-          Icon(icon,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              active ? activeIcon : icon,
               color: active ? AppColors.primary : AppColors.textSecondary,
-              size: 24),
-          const SizedBox(height: 3),
-          Text(label,
-              style: TextStyle(fontFamily: 'Nunito', fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: active ? AppColors.primary : AppColors.textSecondary)),
-        ]),
+              size: 24,
+            ),
+            const SizedBox(height: 4),
+            CustomText.label(
+              label,
+              color: active ? AppColors.primary : AppColors.textSecondary,
+            ),
+          ],
+        ),
       ),
     );
   }

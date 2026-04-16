@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import 'admin_users_controller.dart';
+import '../controllers/admin_users_controller.dart';
 
 class AdminUsersBinding extends Bindings {
   @override

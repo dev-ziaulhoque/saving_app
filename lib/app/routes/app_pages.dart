@@ -5,13 +5,13 @@ import '../../modules/auth/login/login_view.dart';
 import '../../modules/auth/register/register_binding.dart';
 import '../../modules/auth/register/register_view.dart';
 import '../../modules/auth/pending/pending_view.dart';
-import '../../modules/admin/dashboard/admin_dashboard_binding.dart';
-import '../../modules/admin/dashboard/admin_dashboard_view.dart';
-import '../../modules/admin/users/admin_users_binding.dart';
-import '../../modules/admin/users/admin_users_view.dart' hide AdminUsersBinding;
-import '../../modules/admin/users/admin_user_detail_view.dart';
-import '../../modules/admin/payments/admin_payments_binding.dart';
-import '../../modules/admin/payments/admin_payments_view.dart';
+import '../../modules/admin/dashboard/binding/admin_dashboard_binding.dart';
+import '../../modules/admin/dashboard/views/admin_dashboard_view.dart';
+import '../../modules/admin/users/binding/admin_users_binding.dart';
+import '../../modules/admin/users/views/admin_users_view.dart' hide AdminUsersBinding;
+import '../../modules/admin/users/views/admin_user_detail_view.dart';
+import '../../modules/admin/payments/binding/admin_payments_binding.dart';
+import '../../modules/admin/payments/views/admin_payments_view.dart';
 import '../../modules/admin/notifications/admin_notifications_view.dart';
 import '../../modules/chat/binding/chat_binding.dart';
 import '../../modules/chat/views/admin_inbox_view.dart';
@@ -19,8 +19,10 @@ import '../../modules/chat/views/chat_details_view.dart';
 import '../../modules/chat/views/chat_view.dart';
 import '../../modules/user/dashboard/binding/user_dashboard_binding.dart';
 import '../../modules/user/dashboard/views/user_dashboard_view.dart';
-import '../../modules/user/history/user_history_binding.dart';
-import '../../modules/user/history/user_history_view.dart';
+import '../../modules/user/history/binding/user_history_binding.dart';
+import '../../modules/user/history/controllers/user_payment_request_controller.dart';
+import '../../modules/user/history/views/user_history_view.dart';
+import '../../modules/user/history/views/user_payment_request_view.dart';
 import '../../modules/user/notifications/user_notifications_binding.dart';
 import '../../modules/user/notifications/user_notifications_view.dart';
 import '../../modules/user/profile/user_profile_binding.dart';
@@ -118,6 +120,14 @@ class AppPages {
     GetPage(
       name: AppRoutes.USER_EDIT_PROFILE,
       page: () => const UserProfileView(),
+    ),
+
+    GetPage(
+      name: AppRoutes.PAYMENT_REQUEST,
+      page: () => const PaymentRequestView(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut(() => PaymentRequestController());
+      }),
     ),
   ];
 }

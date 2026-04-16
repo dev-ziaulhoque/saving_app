@@ -47,6 +47,10 @@ dependencies:
   timeago: ^3.7.0
   equatable: ^2.0.5
 
+  csv: ^6.0.0
+  path_provider: ^2.1.2
+  share_plus: ^10.1.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

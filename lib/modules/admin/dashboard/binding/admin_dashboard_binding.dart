@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import 'admin_dashboard_controller.dart';
+import '../controllers/admin_dashboard_controller.dart';
 
 class AdminDashboardBinding extends Bindings {
   @override

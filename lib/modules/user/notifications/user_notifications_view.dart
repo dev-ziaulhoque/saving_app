@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../data/models/notification_model.dart';
 import '../../../data/providers/api_provider.dart';
 import '../../../data/models/models.dart';
 import '../../../core/theme/app_theme.dart';

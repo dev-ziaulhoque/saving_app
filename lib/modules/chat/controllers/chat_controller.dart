@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../data/models/models.dart';
+import '../../../data/models/user_model.dart';
 import '../../../data/services/chat_service.dart';
 
 class ChatController extends GetxController {
