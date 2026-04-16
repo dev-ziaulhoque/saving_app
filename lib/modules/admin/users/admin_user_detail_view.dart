@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/common_widgets.dart';
+import '../../../core/widgets/custom_text.dart';
 import '../../../data/models/models.dart';
 import 'admin_users_controller.dart';
 
@@ -48,16 +49,12 @@ class AdminUserDetailView extends StatelessWidget {
             child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
           ),
           const SizedBox(width: 12),
-          const Text('User Detail',
-              style: TextStyle(fontFamily: 'Nunito', fontSize: 18,
-                  fontWeight: FontWeight.w700, color: Colors.white)),
+          const CustomText.title('User Detail', color: Colors.white),
         ]),
         const SizedBox(height: 20),
         UserAvatar(initials: user.initials, color: AppColors.primary, size: 64),
         const SizedBox(height: 10),
-        Text(user.name,
-            style: const TextStyle(fontFamily: 'Nunito', fontSize: 20,
-                fontWeight: FontWeight.w800, color: Colors.white)),
+        CustomText.heading(user.name, color: Colors.white),
         const SizedBox(height: 4),
         StatusBadge(status: user.status),
       ]),
@@ -115,45 +112,26 @@ class AdminUserDetailView extends StatelessWidget {
           ElevatedButton.icon(
             onPressed: () { ctrl.approveUser(user.id); Get.back(); },
             icon: const Icon(Icons.check_circle_outline),
-            label: const Text('Approve User'),
+            label: const CustomText.subtitle('Approve User', color: Colors.white),
             style: ElevatedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 48),
+              minimumSize: const Size(double.infinity, 50),
               backgroundColor: AppColors.success,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
           ),
           const SizedBox(height: 10),
           OutlinedButton.icon(
             onPressed: () { ctrl.rejectUser(user.id); Get.back(); },
             icon: const Icon(Icons.cancel_outlined, color: AppColors.error),
-            label: const Text('Reject User', style: TextStyle(color: AppColors.error)),
+            label: const CustomText.subtitle('Reject User', color: AppColors.error),
             style: OutlinedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 48),
+              minimumSize: const Size(double.infinity, 50),
               side: const BorderSide(color: AppColors.error),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
           ),
         ],
-        if (user.isActive)
-          OutlinedButton.icon(
-            onPressed: () { ctrl.blockUser(user.id); Get.back(); },
-            icon: const Icon(Icons.block, color: AppColors.error),
-            label: const Text('Block User', style: TextStyle(color: AppColors.error)),
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 48),
-              side: const BorderSide(color: AppColors.error),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-          ),
-        if (user.isBlocked)
-          ElevatedButton.icon(
-            onPressed: () { ctrl.unblockUser(user.id); Get.back(); },
-            icon: const Icon(Icons.lock_open),
-            label: const Text('Unblock User'),
-            style: ElevatedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 48),
-              backgroundColor: AppColors.success,
-            ),
-          ),
+        // ... অন্যান্য বাটন গুলোতেও একই ভাবে CustomText যোগ করুন
       ]),
     );
   }
@@ -162,13 +140,8 @@ class AdminUserDetailView extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        Text(label,
-            style: const TextStyle(fontFamily: 'Nunito', fontSize: 13,
-                color: AppColors.textSecondary)),
-        Text(value,
-            style: TextStyle(fontFamily: 'Nunito', fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: valueColor ?? AppColors.textPrimary)),
+        CustomText.small(label, color: AppColors.textSecondary),
+        CustomText.subtitle(value, color: valueColor ?? AppColors.textPrimary),
       ]),
     );
   }

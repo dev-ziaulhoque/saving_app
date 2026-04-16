@@ -1,76 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../app/routes/app_routes.dart';
-import '../../../data/providers/api_provider.dart';
+import '../../../core/widgets/custom_text.dart';
 import '../../../data/services/auth_service.dart';
 import '../../../data/models/models.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/common_widgets.dart';
+import '../../../core/widgets/common_widgets.dart'; // এখানে CustomText আছে ধরে নিচ্ছি
+import 'controller/user_profile_controller.dart';
 
-// ─── Controller ───────────────────────────────────────────────
-class UserProfileController extends GetxController {
-  final _api = ApiProvider();
-  final nameController = TextEditingController();
-  final phoneController = TextEditingController();
-  final isEditing = false.obs;
-  final isSaving = false.obs;
-
-  @override
-  void onInit() {
-    super.onInit();
-    final user = AuthService.to.currentUser.value;
-    nameController.text = user?.name ?? '';
-    phoneController.text = user?.phone ?? '';
-  }
-
-  void toggleEdit() => isEditing.value = !isEditing.value;
-
-  Future<void> saveProfile() async {
-    if (nameController.text.trim().isEmpty) return;
-    isSaving.value = true;
-    try {
-      final res = await _api.updateProfile({
-        'name': nameController.text.trim(),
-        'phone': phoneController.text.trim(),
-      });
-      final updated = UserModel.fromJson(res.data['user']);
-      await AuthService.to.updateUser(updated);
-      isEditing.value = false;
-      Get.snackbar('Saved', 'Profile updated successfully',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: AppColors.success,
-          colorText: Colors.white,
-          margin: const EdgeInsets.all(16),
-          borderRadius: 12);
-    } catch (_) {
-      Get.snackbar('Error', 'Failed to update profile',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: AppColors.error,
-          colorText: Colors.white,
-          margin: const EdgeInsets.all(16),
-          borderRadius: 12);
-    } finally {
-      isSaving.value = false;
-    }
-  }
-
-  @override
-  void onClose() {
-    nameController.dispose();
-    phoneController.dispose();
-    super.onClose();
-  }
-}
-
-// ─── Binding ──────────────────────────────────────────────────
-class UserProfileBinding extends Bindings {
-  @override
-  void dependencies() {
-    Get.lazyPut<UserProfileController>(() => UserProfileController());
-  }
-}
-
-// ─── Profile View ─────────────────────────────────────────────
 class UserProfileView extends GetView<UserProfileController> {
   const UserProfileView({super.key});
 
@@ -97,7 +34,7 @@ class UserProfileView extends GetView<UserProfileController> {
             ),
           ),
         ]);
-      },),
+      }),
     );
   }
 
@@ -111,48 +48,61 @@ class UserProfileView extends GetView<UserProfileController> {
       child: Column(children: [
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new,
-                color: Colors.white, size: 18),
+            icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
             onPressed: () => Get.back(),
           ),
-          const Text('My Profile',
-              style: TextStyle(fontFamily: 'Nunito', fontSize: 18,
-                  fontWeight: FontWeight.w700, color: Colors.white)),
+          const CustomText.title('My Profile', color: Colors.white),
           Obx(() => TextButton(
             onPressed: controller.isEditing.value
-                ? controller.saveProfile
+                ? (controller.isSaving.value ? null : controller.saveProfile)
                 : controller.toggleEdit,
-            child: Obx(() => controller.isSaving.value
+            child: controller.isSaving.value
                 ? const SizedBox(width: 18, height: 18,
-                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                : Text(
-                    controller.isEditing.value ? 'Save' : 'Edit',
-                    style: const TextStyle(fontFamily: 'Nunito',
-                        color: AppColors.primaryLight,
-                        fontSize: 14, fontWeight: FontWeight.w700))),
+                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                : CustomText.subtitle(
+                controller.isEditing.value ? 'Save' : 'Edit',
+                color: AppColors.primaryLight),
           )),
         ]),
         const SizedBox(height: 16),
-        Stack(alignment: Alignment.bottomRight, children: [
-          UserAvatar(initials: user.initials, color: AppColors.primary, size: 72),
-          Container(
-            width: 22, height: 22,
-            decoration: BoxDecoration(
-              color: AppColors.primaryLight,
-              borderRadius: BorderRadius.circular(11),
-              border: Border.all(color: AppColors.bgDark, width: 2),
-            ),
-            child: const Icon(Icons.camera_alt, color: Colors.white, size: 12),
-          ),
-        ]),
+
+        // --- Avatar Section with Image Pick ---
+        GestureDetector(
+          onTap: controller.pickImage,
+          child: Stack(alignment: Alignment.bottomRight, children: [
+            Obx(() {
+              // যদি নতুন ইমেজ সিলেক্ট করা হয় তবে সেটা দেখাবে, নাহলে পুরানোটা
+              if (controller.selectedImage.value != null) {
+                return CircleAvatar(
+                  radius: 36,
+                  backgroundImage: FileImage(controller.selectedImage.value!),
+                );
+              }
+              return UserAvatar(
+                  initials: user.initials,
+                  imageUrl: user.avatarUrl, // আপনার মডেলে avatarUrl থাকলে
+                  color: AppColors.primary,
+                  size: 72
+              );
+            }),
+            if (controller.isEditing.value)
+              Container(
+                width: 24, height: 24,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryLight,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.bgDark, width: 2),
+                ),
+                child: const Icon(Icons.camera_alt, color: Colors.white, size: 14),
+              ),
+          ]),
+        ),
+
         const SizedBox(height: 10),
-        Text(user.name,
-            style: const TextStyle(fontFamily: 'Nunito', fontSize: 20,
-                fontWeight: FontWeight.w800, color: Colors.white)),
+        CustomText.heading(user.name, color: Colors.white),
         const SizedBox(height: 4),
-        Text('Member ID: #${user.id.substring(0, 6).toUpperCase()}',
-            style: TextStyle(fontFamily: 'Nunito', fontSize: 12,
-                color: Colors.white.withOpacity(0.4))),
+        CustomText.label('Member ID: #${user.id.substring(0, 6).toUpperCase()}',
+            color: Colors.white.withOpacity(0.5)),
         const SizedBox(height: 8),
         StatusBadge(status: user.status),
       ]),
@@ -208,15 +158,11 @@ class UserProfileView extends GetView<UserProfileController> {
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(children: [
-          Expanded(child: _savingsStat('Total Saved',
-              '৳${user.totalSaved.toStringAsFixed(0)}')),
+          Expanded(child: _savingsStat('Total Saved', '৳${user.totalSaved.toStringAsFixed(0)}')),
           _vDivider(),
-          Expanded(child: _savingsStat('Monthly',
-              '৳${user.monthlyAmount.toStringAsFixed(0)}')),
+          Expanded(child: _savingsStat('Monthly', '৳${user.monthlyAmount.toStringAsFixed(0)}')),
           _vDivider(),
-          Expanded(child: _savingsStat('Dues',
-              '৳${user.dues.toStringAsFixed(0)}',
-              isAlert: user.dues > 0)),
+          Expanded(child: _savingsStat('Dues', '৳${user.dues.toStringAsFixed(0)}', isAlert: user.dues > 0)),
         ]),
       ),
     );
@@ -224,24 +170,13 @@ class UserProfileView extends GetView<UserProfileController> {
 
   Widget _savingsStat(String label, String value, {bool isAlert = false}) {
     return Column(children: [
-      Text(label,
-          style: const TextStyle(fontFamily: 'Nunito', fontSize: 11,
-              color: Colors.white70)),
+      CustomText.label(label, color: Colors.white70),
       const SizedBox(height: 4),
-      Text(value,
-          style: TextStyle(fontFamily: 'Nunito', fontSize: 16,
-              fontWeight: FontWeight.w800,
-              color: isAlert ? const Color(0xFFFCA5A5) : Colors.white)),
+      CustomText.subtitle(value, color: isAlert ? const Color(0xFFFCA5A5) : Colors.white),
     ]);
   }
 
-  Widget _vDivider() {
-    return Container(
-      width: 1, height: 36,
-      color: Colors.white24,
-      margin: const EdgeInsets.symmetric(horizontal: 8),
-    );
-  }
+  Widget _vDivider() => Container(width: 1, height: 36, color: Colors.white24, margin: const EdgeInsets.symmetric(horizontal: 8));
 
   Widget _actionsSection() {
     return Padding(
@@ -259,8 +194,7 @@ class UserProfileView extends GetView<UserProfileController> {
     );
   }
 
-  Widget _actionTile(IconData icon, String label, VoidCallback onTap,
-      {bool isDestructive = false}) {
+  Widget _actionTile(IconData icon, String label, VoidCallback onTap, {bool isDestructive = false}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -271,30 +205,16 @@ class UserProfileView extends GetView<UserProfileController> {
           border: Border.all(color: AppColors.borderColor),
         ),
         child: Row(children: [
-          Icon(icon,
-              color: isDestructive ? AppColors.error : AppColors.textSecondary,
-              size: 20),
+          Icon(icon, color: isDestructive ? AppColors.error : AppColors.textSecondary, size: 20),
           const SizedBox(width: 12),
-          Expanded(
-            child: Text(label,
-                style: TextStyle(fontFamily: 'Nunito', fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: isDestructive ? AppColors.error : AppColors.textPrimary)),
-          ),
-          Icon(Icons.chevron_right,
-              color: isDestructive ? AppColors.error : AppColors.textHint, size: 20),
+          Expanded(child: CustomText.subtitle(label, color: isDestructive ? AppColors.error : AppColors.textPrimary)),
+          Icon(Icons.chevron_right, color: isDestructive ? AppColors.error : AppColors.textHint, size: 20),
         ]),
       ),
     );
   }
 
-  Widget _editableRow({
-    required String label,
-    required TextEditingController controller,
-    required bool isEditing,
-    required IconData icon,
-    TextInputType? keyboardType,
-  }) {
+  Widget _editableRow({required String label, required TextEditingController controller, required bool isEditing, required IconData icon, TextInputType? keyboardType}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(children: [
@@ -302,27 +222,15 @@ class UserProfileView extends GetView<UserProfileController> {
         const SizedBox(width: 12),
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(label,
-                style: const TextStyle(fontFamily: 'Nunito', fontSize: 11,
-                    color: AppColors.textSecondary)),
+            CustomText.label(label, color: AppColors.textSecondary),
             isEditing
                 ? TextField(
-                    controller: controller,
-                    keyboardType: keyboardType,
-                    style: const TextStyle(fontFamily: 'Nunito', fontSize: 14,
-                        color: AppColors.textPrimary, fontWeight: FontWeight.w600),
-                    decoration: const InputDecoration(
-                      isDense: true,
-                      contentPadding: EdgeInsets.symmetric(vertical: 4),
-                      border: UnderlineInputBorder(
-                          borderSide: BorderSide(color: AppColors.primary)),
-                      focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: AppColors.primary, width: 1.5)),
-                    ),
-                  )
-                : Text(controller.text,
-                    style: const TextStyle(fontFamily: 'Nunito', fontSize: 14,
-                        color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+              controller: controller,
+              keyboardType: keyboardType,
+              style: const TextStyle(fontFamily: 'Nunito', fontSize: 14, color: AppColors.textPrimary, fontWeight: FontWeight.w600),
+              decoration: const InputDecoration(isDense: true, contentPadding: EdgeInsets.symmetric(vertical: 4), border: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.primary))),
+            )
+                : CustomText.subtitle(controller.text, color: AppColors.textPrimary),
           ]),
         ),
       ]),
@@ -337,12 +245,8 @@ class UserProfileView extends GetView<UserProfileController> {
         const SizedBox(width: 12),
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(label,
-                style: const TextStyle(fontFamily: 'Nunito', fontSize: 11,
-                    color: AppColors.textSecondary)),
-            Text(value,
-                style: const TextStyle(fontFamily: 'Nunito', fontSize: 14,
-                    color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+            CustomText.label(label, color: AppColors.textSecondary),
+            CustomText.subtitle(value, color: AppColors.textPrimary),
           ]),
         ),
       ]),

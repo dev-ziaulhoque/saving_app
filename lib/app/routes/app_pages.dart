@@ -13,17 +13,16 @@ import '../../modules/admin/users/admin_user_detail_view.dart';
 import '../../modules/admin/payments/admin_payments_binding.dart';
 import '../../modules/admin/payments/admin_payments_view.dart';
 import '../../modules/admin/notifications/admin_notifications_view.dart';
-import '../../modules/admin/chat/admin_chat_binding.dart';
-import '../../modules/admin/chat/admin_chat_list_view.dart';
-import '../../modules/admin/chat/admin_chat_detail_view.dart';
-import '../../modules/user/dashboard/user_dashboard_binding.dart';
-import '../../modules/user/dashboard/user_dashboard_view.dart';
+import '../../modules/chat/binding/chat_binding.dart';
+import '../../modules/chat/views/admin_inbox_view.dart';
+import '../../modules/chat/views/chat_details_view.dart';
+import '../../modules/chat/views/chat_view.dart';
+import '../../modules/user/dashboard/binding/user_dashboard_binding.dart';
+import '../../modules/user/dashboard/views/user_dashboard_view.dart';
 import '../../modules/user/history/user_history_binding.dart';
 import '../../modules/user/history/user_history_view.dart';
 import '../../modules/user/notifications/user_notifications_binding.dart';
 import '../../modules/user/notifications/user_notifications_view.dart';
-import '../../modules/user/chat/user_chat_binding.dart';
-import '../../modules/user/chat/user_chat_view.dart';
 import '../../modules/user/profile/user_profile_binding.dart';
 import '../../modules/user/profile/user_profile_view.dart';
 import '../../modules/user/profile/user_edit_profile_view.dart';
@@ -78,14 +77,16 @@ class AppPages {
       page: () => const AdminNotificationsView(),
       binding: AdminNotificationsBinding(),
     ),
+
     GetPage(
       name: AppRoutes.ADMIN_CHAT,
-      page: () => const AdminChatListView(),
-      binding: AdminChatBinding(),
+      page: () => const AdminInboxView(),
+      binding: ChatBinding(),
     ),
     GetPage(
       name: AppRoutes.ADMIN_CHAT_DETAIL,
-      page: () => const AdminChatDetailView(),
+      page: () => const ChatDetailsView(),
+      binding: ChatBinding(),
     ),
 
     // User Routes
@@ -106,8 +107,8 @@ class AppPages {
     ),
     GetPage(
       name: AppRoutes.USER_CHAT,
-      page: () => const UserChatView(),
-      binding: UserChatBinding(),
+      page: () => const ChatDetailsView(),
+      binding: ChatBinding(),
     ),
     GetPage(
       name: AppRoutes.USER_PROFILE,

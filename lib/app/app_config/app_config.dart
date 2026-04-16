@@ -12,5 +12,5 @@ class AppConfig {
 
   // ─── Admin ──────────────────────────────────────────
   // The UUID of the admin user (set after first run)
-  static const adminId = 'YOUR_ADMIN_UUID_HERE';
+  static const adminId = '6b5bb1f7-87b5-4245-8d81-f9bbc7179483';
 }

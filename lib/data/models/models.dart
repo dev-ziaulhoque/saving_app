@@ -160,42 +160,6 @@ class TransactionModel {
       TransactionModel.fromSupabase(json);
 }
 
-// ─── Message Model ─────────────────────────────────────────────
-class MessageModel {
-  final String id;
-  final String senderId;
-  final String senderName;
-  final String receiverId;
-  final String text;
-  final DateTime sentAt;
-  final bool isRead;
-
-  MessageModel({
-    required this.id,
-    required this.senderId,
-    required this.senderName,
-    required this.receiverId,
-    required this.text,
-    required this.sentAt,
-    this.isRead = false,
-  });
-
-  factory MessageModel.fromSupabase(Map<String, dynamic> json) {
-    return MessageModel(
-      id:         json['id'] ?? '',
-      senderId:   json['sender_id'] ?? '',
-      senderName: json['sender_name'] ?? '',
-      receiverId: json['receiver_id'] ?? '',
-      text:       json['text'] ?? '',
-      sentAt:     DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
-      isRead:     json['is_read'] ?? false,
-    );
-  }
-
-  factory MessageModel.fromJson(Map<String, dynamic> json) =>
-      MessageModel.fromSupabase(json);
-}
-
 // ─── Notification Model ────────────────────────────────────────
 class NotificationModel {
   final String id;

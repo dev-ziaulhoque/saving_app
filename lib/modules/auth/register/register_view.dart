@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/common_widgets.dart'; // CustomText এখানে আছে
+import '../../../core/widgets/custom_text.dart';
 import 'register_controller.dart';
 
 class RegisterView extends GetView<RegisterController> {
@@ -12,7 +14,8 @@ class RegisterView extends GetView<RegisterController> {
       backgroundColor: AppColors.surface,
       appBar: AppBar(
         backgroundColor: AppColors.bgDark,
-        title: const Text('Create Account'),
+        elevation: 0,
+        title: const CustomText.title('Create Account', color: Colors.white),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
           onPressed: () => Get.back(),
@@ -26,23 +29,11 @@ class RegisterView extends GetView<RegisterController> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 8),
-              const Text(
-                'Join SaveSmart',
-                style: TextStyle(
-                  fontFamily: 'Nunito',
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
-                ),
-              ),
+              const CustomText.heading('Join SaveSmart', color: AppColors.textPrimary),
               const SizedBox(height: 4),
-              const Text(
+              const CustomText.body(
                 'Fill in your details and upload a verification document.',
-                style: TextStyle(
-                  fontFamily: 'Nunito',
-                  fontSize: 13,
-                  color: AppColors.textSecondary,
-                ),
+                color: AppColors.textSecondary,
               ),
               const SizedBox(height: 24),
               _buildField(
@@ -78,15 +69,7 @@ class RegisterView extends GetView<RegisterController> {
               const SizedBox(height: 20),
 
               // Document Upload
-              const Text(
-                'Verification Document (NID / Passport)',
-                style: TextStyle(
-                  fontFamily: 'Nunito',
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-              ),
+              const CustomText.subtitle('Verification Document (NID / Passport)', color: AppColors.textPrimary),
               const SizedBox(height: 8),
               Obx(() => GestureDetector(
                 onTap: controller.pickDocument,
@@ -100,7 +83,6 @@ class RegisterView extends GetView<RegisterController> {
                       color: controller.documentPath.value != null
                           ? AppColors.primary
                           : AppColors.borderColor,
-                      style: BorderStyle.solid,
                       width: controller.documentPath.value != null ? 1.5 : 1,
                     ),
                   ),
@@ -116,26 +98,14 @@ class RegisterView extends GetView<RegisterController> {
                         size: 32,
                       ),
                       const SizedBox(height: 8),
-                      Text(
+                      CustomText.subtitle(
                         controller.documentName.value ?? 'Tap to upload document',
-                        style: TextStyle(
-                          fontFamily: 'Nunito',
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: controller.documentPath.value != null
-                              ? AppColors.primary
-                              : AppColors.textSecondary,
-                        ),
+                        color: controller.documentPath.value != null
+                            ? AppColors.primary
+                            : AppColors.textSecondary,
                       ),
                       if (controller.documentPath.value == null)
-                        const Text(
-                          'JPG, PNG, PDF supported',
-                          style: TextStyle(
-                            fontFamily: 'Nunito',
-                            fontSize: 11,
-                            color: AppColors.textHint,
-                          ),
-                        ),
+                        const CustomText.small('JPG, PNG, PDF supported', color: AppColors.textHint),
                     ],
                   ),
                 ),
@@ -148,16 +118,13 @@ class RegisterView extends GetView<RegisterController> {
                   onPressed: controller.isLoading.value ? null : controller.register,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    elevation: 0,
                   ),
                   child: controller.isLoading.value
                       ? const SizedBox(height: 20, width: 20,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Text('Submit for Approval',
-                          style: TextStyle(fontFamily: 'Nunito', fontSize: 16, fontWeight: FontWeight.w700)),
+                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      : const CustomText.subtitle('Submit for Approval', color: Colors.white),
                 ),
               )),
               const SizedBox(height: 16),

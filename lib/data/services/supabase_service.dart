@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../app/app_config/app_config.dart';
@@ -39,6 +40,7 @@ class SupabaseService extends GetxService {
     required String phone,
     File? documentFile,
   }) async {
+    // ১. ইউজার সাইন আপ (এটি সেশন তৈরি করবে)
     final res = await supabase.auth.signUp(
       email: email,
       password: password,
@@ -48,16 +50,27 @@ class SupabaseService extends GetxService {
     if (res.user == null) throw Exception('Sign up failed');
     final uid = res.user!.id;
 
+    // ২. ডকুমেন্টস আপলোড (RLS Policy অনুযায়ী এখন সেশন থাকায় এটি কাজ করবে)
     if (documentFile != null) {
-      final ext = documentFile.path.split('.').last;
-      final path = '$uid/document.$ext';
-      await supabase.storage
-          .from('documents')
-          .upload(path, documentFile,
-          fileOptions: const FileOptions(upsert: true));
-      await supabase
-          .from('profiles')
-          .update({'document_url': path}).eq('id', uid);
+      try {
+        final ext = documentFile.path.split('.').last;
+        final path = '$uid/document.$ext';
+
+        // ফাইল আপলোড
+        await supabase.storage.from('documents').upload(
+          path,
+          documentFile,
+          fileOptions: const FileOptions(upsert: true),
+        );
+
+        // পাবলিক ইউআরএল বা পাথ প্রোফাইলে সেভ করা (পাথ সেভ করাই ভালো)
+        await supabase.from('profiles').update({
+          'document_url': path,
+          'status': 'pending'
+        }).eq('id', uid);
+      } catch (storageError) {
+        debugPrint('Storage Upload Error: $storageError');
+      }
     }
 
     return await getProfile(uid);
@@ -99,25 +112,41 @@ class SupabaseService extends GetxService {
     String? fcmToken,
     File? avatarFile,
   }) async {
-    String? avatarUrl;
-    if (avatarFile != null) {
-      final ext = avatarFile.path.split('.').last;
-      final path = '$uid/avatar.$ext';
-      await supabase.storage
-          .from('avatars')
-          .upload(path, avatarFile,
-          fileOptions: const FileOptions(upsert: true));
-      avatarUrl = path;
+    try {
+      String? finalAvatarUrl;
+
+      // ১. যদি ইমেজ থাকে তবে আপলোড করো
+      if (avatarFile != null) {
+        final ext = avatarFile.path.split('.').last;
+        final path = '$uid/avatar_${DateTime.now().millisecondsSinceEpoch}.$ext'; // ক্যাশিং সমস্যা এড়াতে টাইমস্ট্যাম্প যোগ করা ভালো
+
+        await supabase.storage.from('avatars').upload(
+          path,
+          avatarFile,
+          fileOptions: const FileOptions(upsert: true),
+        );
+
+        // ইমেজের পাবলিক ইউআরএল নেওয়া
+        finalAvatarUrl = supabase.storage.from('avatars').getPublicUrl(path);
+      }
+
+      // ২. আপডেট ডাটা তৈরি করা
+      final updates = <String, dynamic>{};
+      if (name != null) updates['name'] = name;
+      if (phone != null) updates['phone'] = phone;
+      if (fcmToken != null) updates['fcm_token'] = fcmToken;
+      if (finalAvatarUrl != null) updates['avatar_url'] = finalAvatarUrl;
+
+      // ৩. ডাটাবেস আপডেট
+      if (updates.isNotEmpty) {
+        await supabase.from('profiles').update(updates).eq('id', uid);
+      }
+
+      // ৪. আপডেট হওয়া প্রোফাইল রিটার্ন করা
+      return await getProfile(uid);
+    } catch (e) {
+      throw 'Update failed: $e';
     }
-
-    final updates = <String, dynamic>{};
-    if (name != null) updates['name'] = name;
-    if (phone != null) updates['phone'] = phone;
-    if (fcmToken != null) updates['fcm_token'] = fcmToken;
-    if (avatarUrl != null) updates['avatar_url'] = avatarUrl;
-
-    await supabase.from('profiles').update(updates).eq('id', uid);
-    return await getProfile(uid);
   }
 
   // ─────────────────────────────────────────────────────
@@ -257,76 +286,76 @@ class SupabaseService extends GetxService {
     });
   }
 
-  // ─────────────────────────────────────────────────────
-  // CHAT – MESSAGES
-  // ─────────────────────────────────────────────────────
-
-  Future<List<MessageModel>> getMessages({
-    required String userAId,
-    required String userBId,
-  }) async {
-    final data = await supabase
-        .from('messages')
-        .select()
-        .or('and(sender_id.eq.$userAId,receiver_id.eq.$userBId),and(sender_id.eq.$userBId,receiver_id.eq.$userAId)')
-        .order('created_at', ascending: true);
-    return (data as List).map((m) => MessageModel.fromSupabase(m)).toList();
-  }
-
-  Future<void> sendMessage({
-    required String senderId,
-    required String receiverId,
-    required String text,
-  }) async {
-    await supabase.from('messages').insert({
-      'sender_id': senderId,
-      'receiver_id': receiverId,
-      'text': text,
-    });
-  }
-
-  Future<void> markMessagesRead({
-    required String senderId,
-    required String receiverId,
-  }) async {
-    await supabase
-        .from('messages')
-        .update({'is_read': true})
-        .eq('sender_id', senderId)
-        .eq('receiver_id', receiverId)
-        .eq('is_read', false);
-  }
-
-  Future<List<Map<String, dynamic>>> getAdminChatList() async {
-    final result = await supabase.rpc('get_admin_chat_list');
-    return List<Map<String, dynamic>>.from(result);
-  }
-
-  // ─────────────────────────────────────────────────────
-  // REALTIME SUBSCRIPTIONS
-  // ─────────────────────────────────────────────────────
-
-  RealtimeChannel subscribeToMessages({
-    required String userAId,
-    required String userBId,
-    required void Function(MessageModel) onMessage,
-  }) {
-    return supabase
-        .channel('messages:$userAId:$userBId')
-        .onPostgresChanges(
-      event: PostgresChangeEvent.insert,
-      schema: 'public',
-      table: 'messages',
-      callback: (payload) {
-        final msg = MessageModel.fromSupabase(payload.newRecord);
-        final relevant =
-            (msg.senderId == userAId && msg.receiverId == userBId) ||
-                (msg.senderId == userBId && msg.receiverId == userAId);
-        if (relevant) onMessage(msg);
-      },
-    )
-        .subscribe();
-  }
+  // // ─────────────────────────────────────────────────────
+  // // CHAT – MESSAGES
+  // // ─────────────────────────────────────────────────────
+  //
+  // Future<List<MessageModel>> getMessages({
+  //   required String userAId,
+  //   required String userBId,
+  // }) async {
+  //   final data = await supabase
+  //       .from('messages')
+  //       .select()
+  //       .or('and(sender_id.eq.$userAId,receiver_id.eq.$userBId),and(sender_id.eq.$userBId,receiver_id.eq.$userAId)')
+  //       .order('created_at', ascending: true);
+  //   return (data as List).map((m) => MessageModel.fromSupabase(m)).toList();
+  // }
+  //
+  // Future<void> sendMessage({
+  //   required String senderId,
+  //   required String receiverId,
+  //   required String text,
+  // }) async {
+  //   await supabase.from('messages').insert({
+  //     'sender_id': senderId,
+  //     'receiver_id': receiverId,
+  //     'text': text,
+  //   });
+  // }
+  //
+  // Future<void> markMessagesRead({
+  //   required String senderId,
+  //   required String receiverId,
+  // }) async {
+  //   await supabase
+  //       .from('messages')
+  //       .update({'is_read': true})
+  //       .eq('sender_id', senderId)
+  //       .eq('receiver_id', receiverId)
+  //       .eq('is_read', false);
+  // }
+  //
+  // Future<List<Map<String, dynamic>>> getAdminChatList() async {
+  //   final result = await supabase.rpc('get_admin_chat_list');
+  //   return List<Map<String, dynamic>>.from(result);
+  // }
+  //
+  // // ─────────────────────────────────────────────────────
+  // // REALTIME SUBSCRIPTIONS
+  // // ─────────────────────────────────────────────────────
+  //
+  // RealtimeChannel subscribeToMessages({
+  //   required String userAId,
+  //   required String userBId,
+  //   required void Function(MessageModel) onMessage,
+  // }) {
+  //   return supabase
+  //       .channel('messages:$userAId:$userBId')
+  //       .onPostgresChanges(
+  //     event: PostgresChangeEvent.insert,
+  //     schema: 'public',
+  //     table: 'messages',
+  //     callback: (payload) {
+  //       final msg = MessageModel.fromSupabase(payload.newRecord);
+  //       final relevant =
+  //           (msg.senderId == userAId && msg.receiverId == userBId) ||
+  //               (msg.senderId == userBId && msg.receiverId == userAId);
+  //       if (relevant) onMessage(msg);
+  //     },
+  //   )
+  //       .subscribe();
+  // }
 
   RealtimeChannel subscribeToNotifications({
     required String userId,

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:saving_app/modules/user/dashboard/user_dashboard_controller.dart';
-import '../../../app/routes/app_routes.dart';
-import '../../../data/providers/api_provider.dart';
-import '../../../data/models/models.dart';
-import '../../../data/services/auth_service.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/common_widgets.dart';
+import 'package:saving_app/modules/user/dashboard/controllers/user_dashboard_controller.dart';
+import '../../../../app/routes/app_routes.dart';
+import '../../../../data/providers/api_provider.dart';
+import '../../../../data/models/models.dart';
+import '../../../../data/services/auth_service.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/common_widgets.dart';
 
 class UserDashboardView extends GetView<UserDashboardController> {
   const UserDashboardView({super.key});
@@ -209,6 +209,7 @@ class UserDashboardView extends GetView<UserDashboardController> {
             () => Get.toNamed(AppRoutes.USER_NOTIFICATIONS)),
         _navItem(Icons.chat_bubble_outline, 'Chat', 2, current,
             () => Get.toNamed(AppRoutes.USER_CHAT)),
+
         _navItem(Icons.person_outline, 'Profile', 3, current,
             () => Get.toNamed(AppRoutes.USER_PROFILE)),
       ]),

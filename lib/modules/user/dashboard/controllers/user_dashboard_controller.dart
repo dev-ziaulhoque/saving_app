@@ -1,7 +1,7 @@
 import 'package:get/get.dart';
-import '../../../data/services/supabase_service.dart';
-import '../../../data/services/auth_service.dart';
-import '../../../data/models/models.dart';
+import '../../../../data/services/supabase_service.dart';
+import '../../../../data/services/auth_service.dart';
+import '../../../../data/models/models.dart';
 
 class UserDashboardController extends GetxController {
   final isLoading          = false.obs;

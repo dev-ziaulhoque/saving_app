@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:saving_app/core/widgets/custom_text.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/services/auth_service.dart';
@@ -81,11 +82,11 @@ class PendingApprovalView extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text('Logout',
-                      style: TextStyle(
-                          fontFamily: 'Nunito',
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600)),
+                  child: const CustomText(
+                    'Logout',
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600
+                   ),
                 ),
               ),
             ],
