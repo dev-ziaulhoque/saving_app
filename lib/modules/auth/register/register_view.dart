@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/common_widgets.dart'; // CustomText এখানে আছে
 import '../../../core/widgets/custom_text.dart';
 import 'register_controller.dart';
 

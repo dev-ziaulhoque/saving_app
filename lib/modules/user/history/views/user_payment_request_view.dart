@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/custom_Texxt_filed.dart';
+import '../../../../core/widgets/custom_text_field.dart';
 import '../../../../core/widgets/custom_text.dart';
 import '../controllers/user_payment_request_controller.dart';
 
