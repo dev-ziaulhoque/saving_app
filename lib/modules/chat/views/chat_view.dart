@@ -19,28 +19,30 @@ class ChatView extends GetView<ChatController> {
         backgroundColor: AppColors.bgDark,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
+          icon: const Icon(Icons.arrow_back_ios_new,
+              color: Colors.white, size: 18),
           onPressed: () => Get.back(),
         ),
         title: Obx(() => Row(children: [
-          UserAvatar(
-              initials: controller.receiverName.value.isNotEmpty
-                  ? controller.receiverName.value[0]
-                  : '?',
-              color: AppColors.primary,
-              size: 36
-          ),
-          const SizedBox(width: 12),
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            CustomText.subtitle(controller.receiverName.value, color: Colors.white),
-            const CustomText.small('Online', color: Colors.greenAccent),
-          ]),
-        ])),
+              UserAvatar(
+                  initials: controller.receiverName.value.isNotEmpty
+                      ? controller.receiverName.value[0]
+                      : '?',
+                  color: AppColors.primary,
+                  size: 36),
+              const SizedBox(width: 12),
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                CustomText.subtitle(controller.receiverName.value,
+                    color: Colors.white),
+                const CustomText.small('Online', color: Colors.greenAccent),
+              ]),
+            ])),
       ),
       body: Obx(() {
         // receiverId খালি থাকলে লোডিং দেখাবে
         if (controller.receiverId.isEmpty) {
-          return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+          return const Center(
+              child: CircularProgressIndicator(color: AppColors.primary));
         }
 
         return Column(children: [
@@ -55,7 +57,8 @@ class ChatView extends GetView<ChatController> {
                 final messages = snapshot.data ?? [];
 
                 if (messages.isEmpty) {
-                  return const Center(child: CustomText.body('No messages yet. Say Hi!'));
+                  return const Center(
+                      child: CustomText.body('No messages yet. Say Hi!'));
                 }
 
                 return ListView.builder(
@@ -77,9 +80,6 @@ class ChatView extends GetView<ChatController> {
     );
   }
 
-
-
-
   Widget _buildBubble(msg, bool isMine) {
     return Align(
       alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
@@ -97,7 +97,8 @@ class ChatView extends GetView<ChatController> {
           border: isMine ? null : Border.all(color: AppColors.borderColor),
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-          CustomText.body(msg.text, color: isMine ? Colors.white : AppColors.textPrimary),
+          CustomText.body(msg.text,
+              color: isMine ? Colors.white : AppColors.textPrimary),
           const SizedBox(height: 4),
           CustomText.small(
             '${msg.createdAt.hour}:${msg.createdAt.minute.toString().padLeft(2, '0')}',
@@ -111,7 +112,9 @@ class ChatView extends GetView<ChatController> {
   Widget _buildInputBar() {
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: const BoxDecoration(color: Colors.white, border: Border(top: BorderSide(color: AppColors.borderColor))),
+      decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: AppColors.borderColor))),
       child: Row(children: [
         Expanded(
           child: TextField(
@@ -120,14 +123,18 @@ class ChatView extends GetView<ChatController> {
               hintText: 'Type message...',
               filled: true,
               fillColor: AppColors.surface2,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  borderSide: BorderSide.none),
             ),
           ),
         ),
         const SizedBox(width: 8),
         GestureDetector(
           onTap: controller.sendMessage,
-          child: const CircleAvatar(backgroundColor: AppColors.primary, child: Icon(Icons.send, color: Colors.white, size: 20)),
+          child: const CircleAvatar(
+              backgroundColor: AppColors.primary,
+              child: Icon(Icons.send, color: Colors.white, size: 20)),
         ),
       ]),
     );

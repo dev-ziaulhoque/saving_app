@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../data/models/models.dart';
 import '../../../../data/services/auth_service.dart';
 import '../../../../data/services/supabase_service.dart';
 
@@ -39,7 +38,8 @@ class UserProfileController extends GetxController {
 
   Future<void> pickImage() async {
     if (!isEditing.value) return;
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 50);
+    final XFile? image =
+        await _picker.pickImage(source: ImageSource.gallery, imageQuality: 50);
     if (image != null) selectedImage.value = File(image.path);
   }
 

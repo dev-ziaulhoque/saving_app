@@ -39,6 +39,14 @@ class AppTheme {
         background: AppColors.surface,
       ),
       scaffoldBackgroundColor: AppColors.surface,
+      dialogTheme: const DialogThemeData(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+      ),
+      datePickerTheme: const DatePickerThemeData(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+      ),
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.bgDark,
         foregroundColor: Colors.white,
@@ -86,7 +94,8 @@ class AppTheme {
           color: AppColors.textSecondary,
           fontSize: 14,
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
       cardTheme: CardThemeData(
         elevation: 0,

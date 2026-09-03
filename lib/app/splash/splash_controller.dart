@@ -28,7 +28,9 @@ class SplashController extends GetxController {
     // Session আছে কিন্তু profile এখনো load হয়নি হতে পারে
     // তাই fresh profile fetch করো
     try {
-      final profile = await SupabaseService.to.getProfile(session.user.id);
+      final profile = await SupabaseService.to
+          .getProfile(session.user.id)
+          .timeout(const Duration(seconds: 10));
       await auth.saveSession(profile);
 
       if (profile.isPending) {
@@ -43,6 +45,9 @@ class SplashController extends GetxController {
       }
     } catch (_) {
       // Profile fetch fail হলে login এ পাঠাও
+      try {
+        await auth.logout().timeout(const Duration(seconds: 3));
+      } catch (_) {}
       Get.offAllNamed(AppRoutes.LOGIN);
     }
   }

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../data/models/transaction_model.dart';
-import '../../../../data/providers/api_provider.dart';
-import '../../../../data/models/models.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../controllers/user_history_controller.dart';
@@ -16,7 +15,8 @@ class UserHistoryView extends GetView<UserHistoryController> {
       backgroundColor: AppColors.surface,
       appBar: const DarkTopBar(title: 'Transaction History', showBack: true),
       body: Obx(() => controller.isLoading.value
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.primary))
           : RefreshIndicator(
               onRefresh: controller.fetchHistory,
               color: AppColors.primary,
@@ -28,7 +28,8 @@ class UserHistoryView extends GetView<UserHistoryController> {
                   : ListView.builder(
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       itemCount: controller.transactions.length,
-                      itemBuilder: (_, i) => _txnItem(controller.transactions[i]),
+                      itemBuilder: (_, i) =>
+                          _txnItem(controller.transactions[i]),
                     ),
             )),
     );
@@ -45,9 +46,11 @@ class UserHistoryView extends GetView<UserHistoryController> {
       ),
       child: Row(children: [
         Container(
-          width: 44, height: 44,
+          width: 44,
+          height: 44,
           decoration: BoxDecoration(
-            color: t.isConfirmed ? AppColors.successLight : AppColors.warningLight,
+            color:
+                t.isConfirmed ? AppColors.successLight : AppColors.warningLight,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(
@@ -58,21 +61,46 @@ class UserHistoryView extends GetView<UserHistoryController> {
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(t.month,
-                style: const TextStyle(fontFamily: 'Nunito', fontSize: 14,
-                    fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-            Text('${t.submittedAt.day}/${t.submittedAt.month}/${t.submittedAt.year}',
-                style: const TextStyle(fontFamily: 'Nunito', fontSize: 12,
+                style: const TextStyle(
+                    fontFamily: 'Nunito',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary)),
+            Text(
+                '${t.submittedAt.day}/${t.submittedAt.month}/${t.submittedAt.year}',
+                style: const TextStyle(
+                    fontFamily: 'Nunito',
+                    fontSize: 12,
                     color: AppColors.textSecondary)),
+            if (t.note != null && t.note!.isNotEmpty)
+              Text(t.note!,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      fontSize: 10, color: AppColors.textSecondary)),
           ]),
         ),
         Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
           Text('+৳${t.amount.toStringAsFixed(0)}',
-              style: const TextStyle(fontFamily: 'Nunito', fontSize: 15,
-                  fontWeight: FontWeight.w800, color: AppColors.success)),
+              style: const TextStyle(
+                  fontFamily: 'Nunito',
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.success)),
           const SizedBox(height: 4),
           StatusBadge(status: t.status),
+          if (t.receiptUrl != null && t.receiptUrl!.isNotEmpty)
+            IconButton(
+              tooltip: 'View payment proof',
+              visualDensity: VisualDensity.compact,
+              onPressed: () => launchUrl(Uri.parse(t.receiptUrl!),
+                  mode: LaunchMode.externalApplication),
+              icon: const Icon(Icons.verified_user_outlined,
+                  size: 18, color: AppColors.primary),
+            ),
         ]),
       ]),
     );

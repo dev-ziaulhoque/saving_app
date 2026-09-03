@@ -3,14 +3,15 @@ import 'package:get/get.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../data/services/supabase_service.dart';
 import '../../../data/services/auth_service.dart';
+import '../../../core/utils/app_logger.dart';
 
 class LoginController extends GetxController {
-  final emailController    = TextEditingController();
+  final emailController = TextEditingController();
   final passwordController = TextEditingController();
-  final formKey            = GlobalKey<FormState>();
+  final formKey = GlobalKey<FormState>();
 
-  final selectedRole   = 'user'.obs;
-  final isLoading      = false.obs;
+  final selectedRole = 'user'.obs;
+  final isLoading = false.obs;
   final obscurePassword = true.obs;
 
   void toggleRole(String role) => selectedRole.value = role;
@@ -22,31 +23,34 @@ class LoginController extends GetxController {
 
     try {
       // ১. ইনপুট ডেটাগুলো ভেরিয়েবলে সেভ করা হলো
-      final String email = emailController.text.trim();
+      final String email = emailController.text.trim().toLowerCase();
       final String password = passwordController.text;
-      final String role = selectedRole.value;
-
-      // ২. কি কি ইনপুট যাচ্ছে তা কনসোলে প্রিন্ট করে দেখা
-      debugPrint('========= Login Input Data =========');
-      debugPrint('Email    : $email');
-      debugPrint('Password : $password');
-      debugPrint('Role     : $role');
-      debugPrint('====================================');
-
       // ৩. Supabase এ ডেটা পাঠানো হলো
       final user = await SupabaseService.to.signIn(
-        email:    email,
+        email: email,
         password: password,
       );
+      AppLogger.success('auth.loginProfile', {
+        'user_id': user.id,
+        'role': user.role,
+        'status': user.status,
+        'selected_role': selectedRole.value,
+      });
 
       // ৪. রেসপন্স প্রিন্ট করে দেখা
       debugPrint('Login Success Response: $user');
 
       // Role check
       if (selectedRole.value == 'admin' && !user.isAdmin) {
+        await SupabaseService.to.signOut();
         throw Exception('Not an admin account');
       }
+      if (selectedRole.value == 'admin' && !user.isActive) {
+        await SupabaseService.to.signOut();
+        throw Exception('Admin account is not active (status: ${user.status})');
+      }
       if (selectedRole.value == 'user' && user.isAdmin) {
+        await SupabaseService.to.signOut();
         throw Exception('Please use admin login');
       }
 

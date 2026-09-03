@@ -15,12 +15,14 @@ class AdminInboxView extends GetView<AdminInboxController> {
       appBar: const DarkTopBar(title: 'Support Messages', showBack: true),
       body: Obx(() {
         if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+          return const Center(
+              child: CircularProgressIndicator(color: AppColors.primary));
         }
 
         if (controller.chatList.isEmpty) {
           return const Center(
-            child: CustomText.body('No messages yet', color: AppColors.textSecondary),
+            child: CustomText.body('No messages yet',
+                color: AppColors.textSecondary),
           );
         }
 
@@ -54,13 +56,17 @@ class AdminInboxView extends GetView<AdminInboxController> {
                   trailing: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      if (chat['unread_count'] > 0)
+                      if ((chat['unread_count'] as num? ?? 0) > 0)
                         Container(
                           padding: const EdgeInsets.all(6),
-                          decoration: const BoxDecoration(color: AppColors.error, shape: BoxShape.circle),
-                          child: CustomText.label(chat['unread_count'].toString(), color: Colors.white),
+                          decoration: const BoxDecoration(
+                              color: AppColors.error, shape: BoxShape.circle),
+                          child: CustomText.label(
+                              (chat['unread_count'] as num).toInt().toString(),
+                              color: Colors.white),
                         ),
-                      const Icon(Icons.chevron_right, size: 20, color: AppColors.textHint),
+                      const Icon(Icons.chevron_right,
+                          size: 20, color: AppColors.textHint),
                     ],
                   ),
                 ),

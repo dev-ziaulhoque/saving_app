@@ -8,7 +8,6 @@ class SplashView extends GetView<SplashController> {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(SplashController());
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -51,7 +50,7 @@ class SplashView extends GetView<SplashController> {
                 style: TextStyle(
                   fontFamily: 'Nunito',
                   fontSize: 15,
-                  color: Colors.white.withOpacity(0.55),
+                  color: Colors.white.withValues(alpha: 0.55),
                 ),
               ),
               const SizedBox(height: 60),

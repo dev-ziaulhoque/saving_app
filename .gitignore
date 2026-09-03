@@ -48,3 +48,6 @@ app.*.map.json
 # Firebase
 google-services.json
 GoogleService-Info.plist
+
+# Supabase Edge Function secrets (never commit service-account JSON)
+supabase/.env*

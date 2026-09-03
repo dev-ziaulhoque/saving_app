@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:get/get.dart' hide Response, FormData;
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/auth_service.dart';
 
 class ApiProvider {
@@ -13,7 +14,10 @@ class ApiProvider {
       baseUrl: baseUrl,
       connectTimeout: const Duration(seconds: 30),
       receiveTimeout: const Duration(seconds: 30),
-      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
     ));
 
     _dio.interceptors.add(PrettyDioLogger(
@@ -24,7 +28,7 @@ class ApiProvider {
 
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) {
-        final token = AuthService.to;
+        final token = Supabase.instance.client.auth.currentSession?.accessToken;
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';
         }
@@ -98,7 +102,8 @@ class ApiProvider {
   }
 
   // ─── Admin – Notifications ─────────────────────────────────
-  Future<Response> sendNotification(String title, String body, {String? userId}) async {
+  Future<Response> sendNotification(String title, String body,
+      {String? userId}) async {
     return await _dio.post('/admin/notifications', data: {
       'title': title,
       'body': body,

@@ -6,6 +6,7 @@ class NotificationModel {
   final String body;
   final String type;
   final bool isRead;
+  final bool isCompleted;
   final DateTime createdAt;
 
   NotificationModel({
@@ -15,17 +16,19 @@ class NotificationModel {
     required this.body,
     required this.type,
     this.isRead = false,
+    this.isCompleted = false,
     required this.createdAt,
   });
 
   factory NotificationModel.fromSupabase(Map<String, dynamic> json) {
     return NotificationModel(
-      id:        json['id'] ?? '',
-      userId:    json['user_id'],
-      title:     json['title'] ?? '',
-      body:      json['body'] ?? '',
-      type:      json['type'] ?? 'general',
-      isRead:    json['is_read'] ?? false,
+      id: json['id'] ?? '',
+      userId: json['user_id'],
+      title: json['title'] ?? '',
+      body: json['body'] ?? '',
+      type: json['type'] ?? 'general',
+      isRead: json['is_read'] ?? false,
+      isCompleted: json['is_completed'] ?? false,
       createdAt: DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
     );
   }

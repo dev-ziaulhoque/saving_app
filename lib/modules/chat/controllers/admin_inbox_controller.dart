@@ -1,17 +1,26 @@
 import 'package:get/get.dart';
 import '../../../app/routes/app_routes.dart';
-import '../../../data/models/models.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/services/chat_service.dart';
+import '../../../core/utils/app_logger.dart';
+import '../../../data/services/badge_service.dart';
 
 class AdminInboxController extends GetxController {
   final chatList = <Map<String, dynamic>>[].obs;
   final isLoading = false.obs;
+  Worker? _badgeWorker;
 
   @override
   void onInit() {
     super.onInit();
     fetchInbox();
+    _badgeWorker = ever<int>(BadgeService.to.unreadChats, (_) => fetchInbox());
+  }
+
+  @override
+  void onClose() {
+    _badgeWorker?.dispose();
+    super.onClose();
   }
 
   Future<void> fetchInbox() async {
@@ -19,8 +28,9 @@ class AdminInboxController extends GetxController {
     try {
       final list = await ChatService.to.getAdminChatList();
       chatList.assignAll(list);
+      await BadgeService.to.refresh();
     } catch (e) {
-      print("Error fetching inbox: $e");
+      AppLogger.error('chat.adminInbox', e);
     } finally {
       isLoading.value = false;
     }

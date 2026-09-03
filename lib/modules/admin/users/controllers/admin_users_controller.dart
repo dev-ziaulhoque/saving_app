@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../data/models/user_model.dart';
 import '../../../../data/services/supabase_service.dart'; // ApiProvider বদলে SupabaseService
-import '../../../../data/models/models.dart';
 import '../../../../core/theme/app_theme.dart';
 
 class AdminUsersController extends GetxController {
@@ -23,9 +22,11 @@ class AdminUsersController extends GetxController {
   Future<void> fetchUsers() async {
     isLoading.value = true;
     try {
-      final status = selectedFilter.value == 'all' ? null : selectedFilter.value;
+      final status =
+          selectedFilter.value == 'all' ? null : selectedFilter.value;
       // Supabase থেকে ডাটা ফেচ করা হচ্ছে
-      final List<UserModel> fetchedUsers = await SupabaseService.to.getUsers(status: status);
+      final List<UserModel> fetchedUsers =
+          await SupabaseService.to.getUsers(status: status);
       users.assignAll(fetchedUsers);
     } catch (e) {
       Get.snackbar('Error', 'Failed to fetch users',
@@ -72,6 +73,36 @@ class AdminUsersController extends GetxController {
       await SupabaseService.to.rejectUser(userId); // Supabase Call
       _updateLocalUserStatus(userId, 'rejected');
     } catch (_) {}
+  }
+
+  Future<void> setMonthlyAmountForUser(String userId, double amount) async {
+    try {
+      await SupabaseService.to.setMonthlyAmount(userId, amount);
+      final idx = users.indexWhere((u) => u.id == userId);
+      if (idx != -1) {
+        users[idx] = users[idx].copyWith(monthlyAmount: amount);
+        users.refresh();
+      }
+      Get.back();
+      Get.snackbar('Updated',
+          'Member monthly amount is now ৳${amount.toStringAsFixed(0)}',
+          backgroundColor: AppColors.success, colorText: Colors.white);
+    } catch (e) {
+      Get.snackbar('Update failed', e.toString(),
+          backgroundColor: AppColors.error, colorText: Colors.white);
+    }
+  }
+
+  Future<void> setSavingsStart(String userId, DateTime startDate) async {
+    try {
+      await SupabaseService.to.setUserSavingsStart(userId, startDate);
+      Get.back();
+      Get.snackbar('Updated', 'Savings history start month updated.',
+          backgroundColor: AppColors.success, colorText: Colors.white);
+    } catch (e) {
+      Get.snackbar('Update failed', e.toString(),
+          backgroundColor: AppColors.error, colorText: Colors.white);
+    }
   }
 
   void _updateLocalUserStatus(String userId, String status) {

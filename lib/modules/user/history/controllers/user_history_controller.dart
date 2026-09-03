@@ -1,11 +1,10 @@
 import 'package:get/get.dart';
 
-import '../../../../data/models/models.dart';
 import '../../../../data/models/transaction_model.dart';
-import '../../../../data/providers/api_provider.dart';
+import '../../../../data/services/auth_service.dart';
+import '../../../../data/services/supabase_service.dart';
 
 class UserHistoryController extends GetxController {
-  final _api = ApiProvider();
   final isLoading = false.obs;
   final transactions = <TransactionModel>[].obs;
 
@@ -18,11 +17,11 @@ class UserHistoryController extends GetxController {
   Future<void> fetchHistory() async {
     isLoading.value = true;
     try {
-      final res = await _api.getUserTransactions();
-      transactions.value = (res.data['transactions'] as List)
-          .map((t) => TransactionModel.fromJson(t))
-          .toList();
-    } catch (_) {
+      final uid = AuthService.to.currentUser.value?.id;
+      if (uid == null) throw StateError('No authenticated user');
+      transactions.value = await SupabaseService.to.getUserTransactions(uid);
+    } catch (error) {
+      Get.snackbar('Error', 'Could not load transaction history: $error');
     } finally {
       isLoading.value = false;
     }

@@ -1,7 +1,6 @@
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide User;
-import '../models/models.dart';
 import '../models/user_model.dart';
 import 'supabase_service.dart';
 
@@ -24,8 +23,7 @@ class AuthService extends GetxService {
     final session = Supabase.instance.client.auth.currentSession;
     if (session != null) {
       try {
-        final profile = await SupabaseService.to
-            .getProfile(session.user.id);
+        final profile = await SupabaseService.to.getProfile(session.user.id);
         await _saveLocal(profile);
       } catch (_) {}
     }
@@ -42,9 +40,10 @@ class AuthService extends GetxService {
     return this;
   }
 
-  bool get isLoggedIn  => currentUser.value != null &&
+  bool get isLoggedIn =>
+      currentUser.value != null &&
       Supabase.instance.client.auth.currentSession != null;
-  bool get isAdmin     => currentUser.value?.isAdmin ?? false;
+  bool get isAdmin => currentUser.value?.isAdmin ?? false;
   bool get isPendingApproval => currentUser.value?.isPending ?? false;
 
   Future<void> _saveLocal(UserModel user) async {
